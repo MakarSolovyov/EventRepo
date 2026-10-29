@@ -13,13 +13,13 @@ namespace EventRepo.Services
             return Events.AsReadOnly();
         }
 
-        public Event GetEvent(int id) 
+        public Event GetEventById(Guid id) 
         {
             var ev = Events.FirstOrDefault(e => e.Id == id);
 
             if (ev is null)
             {
-                throw new ArgumentException("Объект с указанным id не существует");
+                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
             else
             {
@@ -32,26 +32,26 @@ namespace EventRepo.Services
             Events.Add(ev);
         }
 
-        public void UpdateEvent(int id, Event ev) 
+        public void UpdateEvent(Guid id, Event ev) 
         {
             var existEvent = Events.FirstOrDefault(e => e.Id == id);
             
             if (existEvent is null)
             {
-                throw new ArgumentException("Объект с указанным id не существует");
+                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
 
             var index = Events.IndexOf(existEvent);
             Events[index] = ev;
         }
 
-        public void DeleteEvent(int id) 
+        public void DeleteEvent(Guid id) 
         {
             var ev = Events.FirstOrDefault(e => e.Id == id);
 
             if (ev is null)
             {
-                throw new ArgumentException("Объект с указанным id не существует");
+                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
             else
             {

@@ -1,14 +1,16 @@
-﻿namespace EventRepo.Models
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace EventRepo.Models
 {
     public class Event
     {
-        public required int Id { get; set; }
-        public required string Title { get; set; }
+        public Guid Id { get; set; }
+        public string Title { get; set; }
         public string Description { get; set; }
-        public required DateTime StartAt { get; set; }
-        public required DateTime EndAt { get; set; }
+        public DateTime StartAt { get; set; }
+        public DateTime EndAt { get; set; }
 
-        public Event(int id, string title, string description, DateTime startAt, DateTime endAt) 
+        public Event(Guid id, string title, string description, DateTime startAt, DateTime endAt) 
         {
             if (startAt > endAt) throw new ArgumentException("Время начала события должно быть раньше времени завершения");
 

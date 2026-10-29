@@ -5,7 +5,7 @@ namespace EventRepo.Models.DTO
     public class EventDTO : IValidatableObject
     {
         [Required(ErrorMessage = "ID события обязателен для заполнения")]
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Навзвание события обязательно для заполнения")]
         public string Title { get; set; }
