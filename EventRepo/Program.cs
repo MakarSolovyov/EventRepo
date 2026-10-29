@@ -1,4 +1,7 @@
 
+using EventRepo.Interfaces;
+using EventRepo.Services;
+
 namespace EventRepo
 {
     public class Program
@@ -6,9 +9,12 @@ namespace EventRepo
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
+            
 
             builder.Services.AddControllers();
+
+            builder.Services.AddScoped<IEventService, EventService>();
+
             builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen();
 
