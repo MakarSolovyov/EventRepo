@@ -40,7 +40,6 @@ namespace EventRepo
 
             builder.Services.AddScoped<IEventService, EventService>();
 
-            //builder.Services.AddOpenApi();
             builder.Services.AddSwaggerGen(options =>
             {
                 var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -52,14 +51,11 @@ namespace EventRepo
 
             if (app.Environment.IsDevelopment())
             {
-                //app.MapOpenApi();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
-
-            //app.UseAuthorization();
 
             app.MapControllers();
 
