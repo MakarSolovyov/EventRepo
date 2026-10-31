@@ -1,5 +1,6 @@
 ﻿using EventRepo.Interfaces;
 using EventRepo.Models;
+using EventRepo.Models.DTO;
 using System.Collections.Concurrent;
 
 namespace EventRepo.Services
@@ -10,44 +11,52 @@ namespace EventRepo.Services
 
         public IReadOnlyList<Event> GetAllEvents() 
         {
-            
             return _events.Values.ToList();
         }
 
-        public Event GetEventById(Guid id) 
+        public Event? GetEventById(Guid id) 
         {
-            if (!_events.TryGetValue(id, out var ev))
-            {
-                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
-            }
-
-            return ev;
+            return _events.TryGetValue(id, out var ev)
+                ? ev
+                : null;
         }
 
-        public void CreateEvent(Event ev) 
+        public Guid? CreateEvent(EventDTO eventDTO) 
         {
-            if (!_events.TryAdd(ev.Id, ev))
-            {
-                throw new ArgumentException($"Событие с ID = {ev.Id} уже существует");
-            }
+            var newEvent = ToEvent(eventDTO);
+
+            if (_events.TryAdd(newEvent.Id, newEvent))
+                return newEvent.Id;
+
+            return null;
         }
 
-        public void UpdateEvent(Guid id, Event ev) 
+        public bool UpdateEvent(Guid id, EventDTO eventDTO) 
         {
-            if (!_events.ContainsKey(id))
+            var newEvent = ToEvent(eventDTO, id);
+
+            while (_events.TryGetValue(newEvent.Id, out var current))
             {
-                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
+                if (_events.TryUpdate(newEvent.Id, newEvent, current))
+                    return true;
             }
 
-            _events[id] = ev;
+            return false;
         }
 
-        public void DeleteEvent(Guid id) 
+        public bool DeleteEvent(Guid id) 
         {
-            if (!_events.Remove(id, out _))
-            {
-                throw new ArgumentException($"Объект с указанным ID = {id} не существует");
-            }
+            return _events.TryRemove(id, out _);
+        }
+
+        private Event ToEvent(EventDTO eventDTO, Guid? id = null) 
+        {
+            return  new Event(
+                id ?? Guid.NewGuid(),
+                eventDTO.Title,
+                eventDTO.Description,
+                eventDTO.StartAt.Value,
+                eventDTO.EndAt.Value);
         }
     }
 }

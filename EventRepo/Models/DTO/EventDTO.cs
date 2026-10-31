@@ -8,15 +8,9 @@ namespace EventRepo.Models.DTO
     public class EventDTO : IValidatableObject
     {
         /// <summary>
-        /// Идентификатор события
-        /// </summary>
-        [Required(ErrorMessage = "ID события обязателен для заполнения")]
-        public Guid Id { get; set; } = Guid.NewGuid();
-
-        /// <summary>
         /// Наименование события
         /// </summary>
-        [Required(ErrorMessage = "Навзвание события обязательно для заполнения")]
+        [Required(ErrorMessage = "Наименование события обязательно для заполнения")]
         public string Title { get; set; }
 
         /// <summary>

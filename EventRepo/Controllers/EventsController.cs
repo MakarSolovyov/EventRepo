@@ -1,15 +1,12 @@
 ﻿using EventRepo.Interfaces;
 using EventRepo.Models;
 using EventRepo.Models.DTO;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventRepo.Controllers
 {
-    [Route("[controller]")]
+    [Route("events")]
     [ApiController]
     public class EventsController : ControllerBase
     {
@@ -53,25 +50,23 @@ namespace EventRepo.Controllers
         [HttpGet("{id:Guid}")]
         public ActionResult<ApiBaseResult> GetEventById(Guid id)
         {
-            try
-            {
-                return Ok(new ApiResult<Event>
-                {
-                    Data = _eventService.GetEventById(id),
-                    Success = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Message = "Получено событие с указанным ID"
-                });
-            }
-            catch (ArgumentException exception)
-            {
+            var ev = _eventService.GetEventById(id);
+
+            if (ev is null)
                 return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
+                    Message = $"Объект с указанным ID = {id} не существует"
                 });
-            }
+
+            return Ok(new ApiResult<Event>
+            {
+                Data = ev,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Получено событие с указанным ID"
+            });
         }
 
         /// <summary>
@@ -88,33 +83,22 @@ namespace EventRepo.Controllers
         [HttpPost]
         public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO eventDTO)
         {
-            try
-            {
-                var newEvent = new Event(
-                eventDTO.Id,
-                eventDTO.Title,
-                eventDTO.Description,
-                eventDTO.StartAt.Value,
-                eventDTO.EndAt.Value);
+            var newEventGuid = _eventService.CreateEvent(eventDTO);
 
-                _eventService.CreateEvent(newEvent);
-
-                return CreatedAtAction(nameof(GetEventById), new { id = newEvent.Id }, new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.Created,
-                    Message = $"Добавлено новое событие с ID = {newEvent.Id}"
-                });
-            }
-            catch (ArgumentException exception)
-            {
+            if (newEventGuid is null)
                 return Conflict(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.Conflict,
-                    Message = $"Событие по указанному идентификатору уже существует: {exception.Message}"
+                    Message = $"Событие с указанным ID уже существует"
                 });
-            }
+
+            return CreatedAtAction(nameof(GetEventById), new { id = newEventGuid }, new ApiResult
+            {
+                Success = true,
+                StatusCode = HttpStatusCode.Created,
+                Message = $"Добавлено новое событие"
+            });
         }
 
         /// <summary>
@@ -132,38 +116,15 @@ namespace EventRepo.Controllers
         [HttpPut("{id:Guid}")]
         public ActionResult<ApiBaseResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO eventDTO)
         {
-            try
-            {
-                var newEvent = new Event(
-                    eventDTO.Id,
-                    eventDTO.Title,
-                    eventDTO.Description,
-                    eventDTO.StartAt.Value,
-                    eventDTO.EndAt.Value);
-
-                if (eventDTO.Id != id)
-                {
-                    return BadRequest(new ApiResult
-                    {
-                        Success = false,
-                        StatusCode = HttpStatusCode.BadRequest,
-                        Message = "ID в маршруте и в теле запроса не совпадают"
-                    });
-                }
-
-                _eventService.UpdateEvent(id, newEvent);
-
-                return NoContent();
-            }
-            catch (ArgumentException exception)
-            {
+            if (!_eventService.UpdateEvent(id, eventDTO))
                 return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
+                    Message = $"Объект с указанным ID = {id} не существует"
                 });
-            }
+
+            return NoContent();
         }
 
         /// <summary>
@@ -178,21 +139,17 @@ namespace EventRepo.Controllers
         [HttpDelete("{id:Guid}")]
         public ActionResult<ApiBaseResult> DeleteEvent(Guid id)
         {
-            try
-            {
-                _eventService.DeleteEvent(id);
-
-                return NoContent();
-            }
-            catch (ArgumentException exception)
+            if (!_eventService.DeleteEvent(id))
             {
                 return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
+                    Message = $"Объект с указанным ID = {id} не существует"
                 });
             }
+
+            return NoContent();
         }
     }
 }
