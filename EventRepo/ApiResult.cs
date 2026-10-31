@@ -2,14 +2,21 @@
 
 namespace EventRepo
 {
+    /// <summary>
+    /// Наследуемый от базового класса ApiBaseResult класс без возвращаемых данных
+    /// </summary>
+    /// <typeparam name="T">Возвращаемые данные метода</typeparam>
     public class ApiResult<T> : ApiBaseResult
     {
-        // Возвращаемые данные метода
+        /// <summary>
+        /// Возвращаемые данные метода
+        /// </summary>
         public required T Data { get; set; }
     }
 
-    // Класс ApiResult без возвращаемых данных
-    // Наследуемся от базового класса с основными параметрами
+    /// <summary>
+    /// Наследуемый от базового класса ApiBaseResult класс без возвращаемых данных
+    /// </summary>
     public class ApiResult : ApiBaseResult { }
 
     /// <summary>

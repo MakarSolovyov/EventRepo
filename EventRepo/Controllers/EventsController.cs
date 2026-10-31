@@ -18,6 +18,13 @@ namespace EventRepo.Controllers
             _eventService = eventService;
         }
 
+        /// <summary>
+        /// Метод возвращает данные всех по всем событиям
+        /// </summary>
+        /// <response code="200">Возвращается JSON-структура ApiResult&lt;IReadOnlyList&lt;Event&gt;&gt;
+        /// с деталями всех имеющихся в коллекции событий</response>
+        [ProducesResponseType(typeof(ApiResult<IReadOnlyList<Event>>), StatusCodes.Status200OK)]
+        [Produces("application/json")]
         [HttpGet]
         public ApiResult<IReadOnlyList<Event>> GetAllEvents() 
         {
@@ -30,6 +37,14 @@ namespace EventRepo.Controllers
             };
         }
 
+        /// <summary>
+        /// Метод возвращает данные по событию по указанному идентификатору
+        /// </summary>
+        /// <param name="id">Идентификатор для получения события</param>
+        /// <response code="200">Возвращается JSON-структура ApiResult&lt;Event&gt; с деталями события</response>
+        /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
+        [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
+        [Produces("application/json")]
         [HttpGet("{id:Guid}")]
         public ApiBaseResult GetEventById(Guid id)
         {
@@ -54,8 +69,15 @@ namespace EventRepo.Controllers
             }
         }
 
+        /// <summary>
+        /// Метод записывает данные по новому событию в коллекцию
+        /// </summary>
+        /// <param name="eventDTO">Данные по новому событию</param>
+        /// <response code="201">Возвращается JSON-структура ApiResult с деталями операции</response>
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
+        [Produces("application/json")]
         [HttpPost]
-        public ApiBaseResult CreateEvent([FromBody] EventDTO eventDTO)
+        public ApiResult CreateEvent([FromBody] EventDTO eventDTO)
         {
             var newEvent = new Event(
                 eventDTO.Id,
@@ -72,6 +94,15 @@ namespace EventRepo.Controllers
             };
         }
 
+        /// <summary>
+        /// Метод обновляет данные по событию в коллекции
+        /// </summary>
+        /// <param name="id">Идентификатор события</param>
+        /// <param name="eventDTO">Данные по обновленному событию</param>
+        /// <response code="204">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
+        [Produces("application/json")]
         [HttpPut("{id:Guid}")]
         public ApiBaseResult UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO eventDTO)
         {
@@ -104,6 +135,14 @@ namespace EventRepo.Controllers
             }
         }
 
+        /// <summary>
+        /// Метод удаляет указанное по идентификатору событие из коллекции
+        /// </summary>
+        /// <param name="id">Идентификатор события</param>
+        /// <response code="204">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
+        [Produces("application/json")]
         [HttpDelete("{id:Guid}")]
         public ApiBaseResult DeleteEvent(Guid id)
         {

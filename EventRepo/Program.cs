@@ -2,6 +2,7 @@
 using EventRepo.Interfaces;
 using EventRepo.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection;
 
 namespace EventRepo
 {
@@ -38,21 +39,26 @@ namespace EventRepo
 
             builder.Services.AddScoped<IEventService, EventService>();
 
-            builder.Services.AddOpenApi();
-            builder.Services.AddSwaggerGen();
+            //builder.Services.AddOpenApi();
+            builder.Services.AddSwaggerGen(options =>
+            {
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                options.IncludeXmlComments(xmlPath);
+            });
 
             var app = builder.Build();
 
             if (app.Environment.IsDevelopment())
             {
-                app.MapOpenApi();
+                //app.MapOpenApi();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
             app.UseHttpsRedirection();
 
-            app.UseAuthorization();
+            //app.UseAuthorization();
 
             app.MapControllers();
 
