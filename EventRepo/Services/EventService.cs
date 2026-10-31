@@ -6,17 +6,17 @@ namespace EventRepo.Services
 {
     public class EventService : IEventService
     {
-        public static ConcurrentDictionary<Guid, Event> Events { get; set; } = new();
+        private readonly ConcurrentDictionary<Guid, Event> _events = new();
 
         public IReadOnlyList<Event> GetAllEvents() 
         {
             
-            return Events.Values.ToList();
+            return _events.Values.ToList();
         }
 
         public Event GetEventById(Guid id) 
         {
-            if (!Events.TryGetValue(id, out var ev))
+            if (!_events.TryGetValue(id, out var ev))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
@@ -26,7 +26,7 @@ namespace EventRepo.Services
 
         public void CreateEvent(Event ev) 
         {
-            if (!Events.TryAdd(ev.Id, ev))
+            if (!_events.TryAdd(ev.Id, ev))
             {
                 throw new ArgumentException($"Событие с ID = {ev.Id} уже существует");
             }
@@ -34,17 +34,17 @@ namespace EventRepo.Services
 
         public void UpdateEvent(Guid id, Event ev) 
         {
-            if (!Events.ContainsKey(id))
+            if (!_events.ContainsKey(id))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
 
-            Events[id] = ev;
+            _events[id] = ev;
         }
 
         public void DeleteEvent(Guid id) 
         {
-            if (!Events.Remove(id, out _))
+            if (!_events.Remove(id, out _))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }

@@ -38,7 +38,7 @@ namespace EventRepo
                 };
             });
 
-            builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddSingleton<IEventService, EventService>();
 
             builder.Services.AddSwaggerGen(options =>
             {
