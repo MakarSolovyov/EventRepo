@@ -1,14 +1,12 @@
 ﻿using EventRepo.Interfaces;
 using EventRepo.Models;
 using EventRepo.Models.DTO;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventRepo.Controllers
 {
-    [Route("[controller]")]
+    [Route("events")]
     [ApiController]
     public class EventsController : ControllerBase
     {
@@ -27,17 +25,17 @@ namespace EventRepo.Controllers
         [ProducesResponseType(typeof(ApiResult<IReadOnlyList<Event>>), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ApiResult<IReadOnlyList<Event>> GetAllEvents() 
+        public ActionResult<ApiResult<IReadOnlyList<Event>>> GetAllEvents() 
         {
             var events = _eventService.GetAllEvents();
 
-            return new ApiResult<IReadOnlyList<Event>>
+            return Ok(new ApiResult<IReadOnlyList<Event>>
             {
                 Data = events,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = $"Получены все имеющиеся события, кол-во событий: {events.Count}"
-            };
+            });
         }
 
         /// <summary>
@@ -46,30 +44,29 @@ namespace EventRepo.Controllers
         /// <param name="id">Идентификатор для получения события</param>
         /// <response code="200">Возвращается JSON-структура ApiResult&lt;Event&gt; с деталями события</response>
         /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
-        [ProducesResponseType(typeof(ApiBaseResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResult<Event>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status404NotFound)]
         [Produces("application/json")]
         [HttpGet("{id:Guid}")]
-        public ApiBaseResult GetEventById(Guid id)
+        public ActionResult<ApiBaseResult> GetEventById(Guid id)
         {
-            try
-            {
-                return new ApiResult<Event>
-                {
-                    Data = _eventService.GetEventById(id),
-                    Success = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Message = "Получено событие с указанным ID"
-                };
-            }
-            catch (ArgumentException exception)
-            {
-                return new ApiResult
+            var ev = _eventService.GetEventById(id);
+
+            if (ev is null)
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
-                };
-            }
+                    Message = $"Объект с указанным ID = {id} не существует"
+                });
+
+            return Ok(new ApiResult<Event>
+            {
+                Data = ev,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Получено событие с указанным ID"
+            });
         }
 
         /// <summary>
@@ -77,39 +74,31 @@ namespace EventRepo.Controllers
         /// </summary>
         /// <param name="eventDTO">Данные по новому событию</param>
         /// <response code="201">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="400">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         /// <response code="409">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status409Conflict)]
         [Produces("application/json")]
         [HttpPost]
-        public ApiResult CreateEvent([FromBody] EventDTO eventDTO)
+        public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO eventDTO)
         {
-            try
-            {
-                var newEvent = new Event(
-                eventDTO.Id,
-                eventDTO.Title,
-                eventDTO.Description,
-                eventDTO.StartAt,
-                eventDTO.EndAt);
+            var newEventGuid = _eventService.CreateEvent(eventDTO);
 
-                _eventService.CreateEvent(newEvent);
-
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.Created,
-                    Message = $"Добавлено новое событие с ID = {newEvent.Id}"
-                };
-            }
-            catch (ArgumentException exception)
-            {
-                return new ApiResult
+            if (newEventGuid is null)
+                return Conflict(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.Conflict,
-                    Message = $"Событие по указанному идентификатору уже существует: {exception.Message}"
-                };
-            }
+                    Message = $"Событие с указанным ID уже существует"
+                });
+
+            return CreatedAtAction(nameof(GetEventById), new { id = newEventGuid }, new ApiResult
+            {
+                Success = true,
+                StatusCode = HttpStatusCode.Created,
+                Message = $"Добавлено новое событие"
+            });
         }
 
         /// <summary>
@@ -117,84 +106,50 @@ namespace EventRepo.Controllers
         /// </summary>
         /// <param name="id">Идентификатор события</param>
         /// <param name="eventDTO">Данные по обновленному событию</param>
-        /// <response code="204">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="204">HTTP статус код без контента</response>
         /// <response code="400">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
-        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status404NotFound)]
         [Produces("application/json")]
         [HttpPut("{id:Guid}")]
-        public ApiBaseResult UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO eventDTO)
+        public ActionResult<ApiBaseResult> UpdateEvent([FromRoute] Guid id, [FromBody] EventDTO eventDTO)
         {
-            try
-            {
-                var newEvent = new Event(
-                    eventDTO.Id,
-                    eventDTO.Title,
-                    eventDTO.Description,
-                    eventDTO.StartAt,
-                    eventDTO.EndAt);
-
-                if (eventDTO.Id != id)
-                {
-                    return new ApiResult
-                    {
-                        Success = false,
-                        StatusCode = HttpStatusCode.BadRequest,
-                        Message = "ID в маршруте и в теле запроса не совпадают"
-                    };
-                }
-
-                _eventService.UpdateEvent(id, newEvent);
-
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = "Обновлено событие с указанным ID"
-                };
-            }
-            catch (ArgumentException exception)
-            {
-                return new ApiResult
+            if (!_eventService.UpdateEvent(id, eventDTO))
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
-                };
-            }
+                    Message = $"Объект с указанным ID = {id} не существует"
+                });
+
+            return NoContent();
         }
 
         /// <summary>
         /// Метод удаляет указанное по идентификатору событие из коллекции
         /// </summary>
         /// <param name="id">Идентификатор события</param>
-        /// <response code="204">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="204">HTTP статус код без контента</response>
         /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
-        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ApiResult), StatusCodes.Status404NotFound)]
         [Produces("application/json")]
         [HttpDelete("{id:Guid}")]
-        public ApiBaseResult DeleteEvent(Guid id)
+        public ActionResult<ApiBaseResult> DeleteEvent(Guid id)
         {
-            try
+            if (!_eventService.DeleteEvent(id))
             {
-                _eventService.DeleteEvent(id);
-
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = "Удалено событие с указанным ID"
-                };
-            }
-            catch (ArgumentException exception)
-            {
-                return new ApiResult
+                return NotFound(new ApiResult
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
-                };
+                    Message = $"Объект с указанным ID = {id} не существует"
+                });
             }
+
+            return NoContent();
         }
     }
 }

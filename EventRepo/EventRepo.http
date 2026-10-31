@@ -1,6 +1,3 @@
 @EventRepo_HostAddress = http://localhost:5298
 
-GET {{EventRepo_HostAddress}}/weatherforecast/
-Accept: application/json
-
 ###

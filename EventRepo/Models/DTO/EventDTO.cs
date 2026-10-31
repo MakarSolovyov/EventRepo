@@ -8,33 +8,27 @@ namespace EventRepo.Models.DTO
     public class EventDTO : IValidatableObject
     {
         /// <summary>
-        /// Идентификатор события
-        /// </summary>
-        [Required(ErrorMessage = "ID события обязателен для заполнения")]
-        public Guid Id { get; set; } = Guid.NewGuid();
-
-        /// <summary>
         /// Наименование события
         /// </summary>
-        [Required(ErrorMessage = "Навзвание события обязательно для заполнения")]
+        [Required(ErrorMessage = "Наименование события обязательно для заполнения")]
         public string Title { get; set; }
 
         /// <summary>
         /// Описание события
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Время начала события
         /// </summary>
         [Required(ErrorMessage = "Время начала события обязательно для заполнения")]
-        public DateTime StartAt { get; set; }
+        public DateTime? StartAt { get; set; }
 
         /// <summary>
         /// Время завершения события
         /// </summary>
         [Required(ErrorMessage = "Время завершения события обязательно для заполнения")]
-        public DateTime EndAt { get; set; }
+        public DateTime? EndAt { get; set; }
 
         /// <summary>
         /// Метод валидации введенных данных по событию
