@@ -22,6 +22,7 @@ namespace EventRepo
                         .Where(x => x.Value?.Errors.Count > 0)
                         .SelectMany(x => x.Value!.Errors)
                         .Select(x => x.ErrorMessage)
+                        .Distinct()
                         .ToList();
 
                     var errorMessage = string.Join("; ", errors);

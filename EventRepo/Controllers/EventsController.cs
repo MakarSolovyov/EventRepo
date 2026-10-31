@@ -4,6 +4,7 @@ using EventRepo.Models.DTO;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventRepo.Controllers
 {
@@ -28,12 +29,14 @@ namespace EventRepo.Controllers
         [HttpGet]
         public ApiResult<IReadOnlyList<Event>> GetAllEvents() 
         {
+            var events = _eventService.GetAllEvents();
+
             return new ApiResult<IReadOnlyList<Event>>
             {
-                Data = _eventService.GetAllEvents(),
+                Data = events,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Получены все имеющиеся события"
+                Message = $"Получены все имеющиеся события, кол-во событий: {events.Count}"
             };
         }
 
@@ -64,7 +67,7 @@ namespace EventRepo.Controllers
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти номер здания по индексу: {exception.Message}"
+                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
                 };
             }
         }
@@ -74,24 +77,39 @@ namespace EventRepo.Controllers
         /// </summary>
         /// <param name="eventDTO">Данные по новому событию</param>
         /// <response code="201">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="409">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status201Created)]
         [Produces("application/json")]
         [HttpPost]
         public ApiResult CreateEvent([FromBody] EventDTO eventDTO)
         {
-            var newEvent = new Event(
+            try
+            {
+                var newEvent = new Event(
                 eventDTO.Id,
                 eventDTO.Title,
                 eventDTO.Description,
                 eventDTO.StartAt,
                 eventDTO.EndAt);
 
-            return new ApiResult
+                _eventService.CreateEvent(newEvent);
+
+                return new ApiResult
+                {
+                    Success = true,
+                    StatusCode = HttpStatusCode.Created,
+                    Message = $"Добавлено новое событие с ID = {newEvent.Id}"
+                };
+            }
+            catch (ArgumentException exception)
             {
-                Success = true,
-                StatusCode = HttpStatusCode.Created,
-                Message = $"Добавлено новое событие с ID = {newEvent.Id}"
-            };
+                return new ApiResult
+                {
+                    Success = false,
+                    StatusCode = HttpStatusCode.Conflict,
+                    Message = $"Событие по указанному идентификатору уже существует: {exception.Message}"
+                };
+            }
         }
 
         /// <summary>
@@ -100,6 +118,7 @@ namespace EventRepo.Controllers
         /// <param name="id">Идентификатор события</param>
         /// <param name="eventDTO">Данные по обновленному событию</param>
         /// <response code="204">Возвращается JSON-структура ApiResult с деталями операции</response>
+        /// <response code="400">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         /// <response code="404">Возвращается JSON-структура ApiResult с деталями ошибки</response>
         [ProducesResponseType(typeof(ApiResult), StatusCodes.Status204NoContent)]
         [Produces("application/json")]
@@ -114,6 +133,16 @@ namespace EventRepo.Controllers
                     eventDTO.Description,
                     eventDTO.StartAt,
                     eventDTO.EndAt);
+
+                if (eventDTO.Id != id)
+                {
+                    return new ApiResult
+                    {
+                        Success = false,
+                        StatusCode = HttpStatusCode.BadRequest,
+                        Message = "ID в маршруте и в теле запроса не совпадают"
+                    };
+                }
 
                 _eventService.UpdateEvent(id, newEvent);
 
@@ -130,7 +159,7 @@ namespace EventRepo.Controllers
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти номер здания по индексу: {exception.Message}"
+                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
                 };
             }
         }
@@ -163,7 +192,7 @@ namespace EventRepo.Controllers
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Не удалось найти номер здания по индексу: {exception.Message}"
+                    Message = $"Не удалось найти событие по идентификатору: {exception.Message}"
                 };
             }
         }

@@ -1,61 +1,52 @@
 ﻿using EventRepo.Interfaces;
 using EventRepo.Models;
+using System.Collections.Concurrent;
 
 namespace EventRepo.Services
 {
     public class EventService : IEventService
     {
-        public static List<Event> Events { get; set; } = [];
+        public static ConcurrentDictionary<Guid, Event> Events { get; set; } = new();
 
         public IReadOnlyList<Event> GetAllEvents() 
         {
             
-            return Events.AsReadOnly();
+            return Events.Values.ToList();
         }
 
         public Event GetEventById(Guid id) 
         {
-            var ev = Events.FirstOrDefault(e => e.Id == id);
-
-            if (ev is null)
+            if (!Events.TryGetValue(id, out var ev))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
-            else
-            {
-                return ev;
-            }
+
+            return ev;
         }
 
         public void CreateEvent(Event ev) 
         {
-            Events.Add(ev);
+            if (!Events.TryAdd(ev.Id, ev))
+            {
+                throw new ArgumentException($"Событие с ID = {ev.Id} уже существует");
+            }
         }
 
         public void UpdateEvent(Guid id, Event ev) 
         {
-            var existEvent = Events.FirstOrDefault(e => e.Id == id);
-            
-            if (existEvent is null)
+            if (!Events.ContainsKey(id))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
             }
 
-            var index = Events.IndexOf(existEvent);
-            Events[index] = ev;
+            Events[id] = ev;
         }
 
         public void DeleteEvent(Guid id) 
         {
-            var ev = Events.FirstOrDefault(e => e.Id == id);
-
-            if (ev is null)
+            if (!Events.Remove(id, out _))
             {
                 throw new ArgumentException($"Объект с указанным ID = {id} не существует");
-            }
-            else
-            {
-                Events.Remove(ev);
             }
         }
     }
