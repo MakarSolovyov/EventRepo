@@ -43,8 +43,6 @@ namespace EventRepo.Models
         // /// <exception cref="ArgumentException">Исключение при неправильном указании времени события</exception>
         public Event(Guid id, string title, string description, DateTime startAt, DateTime endAt) 
         {
-            //if (startAt > endAt) throw new ArgumentException("Время начала события должно быть раньше времени завершения");
-
             Id = id; 
             Title = title; 
             Description = description; 

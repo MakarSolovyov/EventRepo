@@ -3,7 +3,7 @@ using EventRepo.Models.DTO;
 
 namespace EventRepo.Interfaces
 {
-    public interface IEventRepository
+    public interface IEventService
     {
         PaginatedResult<Event> GetAllEvents(
             string? title = null,
@@ -12,7 +12,7 @@ namespace EventRepo.Interfaces
             int page = 1,
             int pageSize = 10);
         Event? GetEventById(Guid id);
-        Guid? CreateEvent(EventDTO eventDTO);
+        Event? CreateEvent(EventDTO eventDTO);
         bool UpdateEvent(Guid id, EventDTO eventDTO);
         bool DeleteEvent(Guid id);
     }

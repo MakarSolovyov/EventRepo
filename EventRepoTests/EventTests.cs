@@ -1,75 +1,191 @@
-﻿using EventRepo.Interfaces;
+using EventRepo.Interfaces;
+using EventRepo.Models;
 using EventRepo.Models.DTO;
 using EventRepo.Services;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Moq;
+using System.Net;
 using System.Timers;
 
 namespace EventRepoTests
 {
-    public class EventFixture
+    public class EventTests
     {
-        public Mock<IEventRepository> MockRepo { get; set; }
-        public EventService EventService { get; set; }
-
-        public EventFixture()
-        {
-            MockRepo = new Mock<IEventRepository>();
-            EventService = new EventService(MockRepo.Object);
-        }
-    }
-
-    public class EventTests : IClassFixture<EventFixture>
-    {
-        private readonly Mock<IEventRepository> _mockRepo;
         private readonly EventService _eventService;
+        private readonly List<Event> _events;
 
-        public EventTests(EventFixture eventFixture)
+        public EventTests()
         {
-            _mockRepo = eventFixture.MockRepo;
-            _eventService = eventFixture.EventService;
+            _events =
+            [
+                new Event(
+                    Guid.Parse("7f3a9c2e-4b1d-4e8f-9a6c-2d5e8b1f3a7c"),
+                    "Новое событие 1",
+                    "Описание события 1",
+                    new DateTime(2026, 1, 1, 10, 0, 0),
+                    new DateTime(2026, 1, 1, 11, 0, 0)),
+                new Event(
+                    Guid.Parse("c4e2a8b6-1f3d-4a9e-8b7c-5d2e6f1a3c9b"),
+                    "Новое событие 2",
+                    "Описание события 2",
+                    new DateTime(2026, 1, 1, 11, 0, 0),
+                    new DateTime(2026, 1, 1, 12, 0, 0)),
+                new Event(
+                    Guid.Parse("2a8f5c1e-9d4b-4f7a-b3e6-8c1d5a2f7e4b"),
+                    "Новое событие 3",
+                    "Описание события 3",
+                    new DateTime(2026, 1, 1, 12, 0, 0),
+                    new DateTime(2026, 1, 1, 13, 0, 0))
+            ];
+
+            _eventService = new EventService(_events);
         }
 
         [Fact]
-        public void CreateEvent_RepoReturnsEvent_ReturnsNewEvent()
+        public void CreateEvent_NewId_ShouldReturnNewEvent()
         {
-            var newEvent = new EventDTO()
+            var expectedEvent = new EventDTO()
             {
                 Title = "Новое событие",
                 Description = "Описание события",
                 StartAt = new DateTime(2026, 1, 1, 10, 0, 0),
-                EndAt = new DateTime(2026, 1, 1, 12, 0, 0)
+                EndAt = new DateTime(2026, 1, 1, 13, 0, 0)
             };
+            var expectedTitle = "Новое событие";
 
-            var expectedId = Guid.NewGuid();
+            var result = _eventService.CreateEvent(expectedEvent);
 
-            _mockRepo.Setup(method => method.CreateEvent(It.IsAny<EventDTO>())).Returns(expectedId);
-
-            var result = _eventService.CreateEvent(newEvent);
-
-            _mockRepo.Verify(repository => repository.CreateEvent(It.IsAny<EventDTO>()), Times.Once);
             Assert.NotNull(result);
-            Assert.Equal(expectedId, result);
+
+            var persisted = _eventService.GetEventById(result!.Id);
+            Assert.NotNull(persisted);
+            Assert.Equal(expectedTitle, persisted!.Title);
         }
 
         [Fact]
-        public void CreateEvent_RepoReturnsNull_ReturnsNull()
+        public void GetAllEvents_ShouldReturnEventCollection() 
         {
-            var newEvent = new EventDTO()
+            var expectedTotalCount = 3;
+            var expectedItemsCountOnPage = 3;
+            var expectedEvents = new List<Event>()
             {
-                Title = "Новое событие",
-                Description = "Описание события",
-                StartAt = new DateTime(2026, 1, 1, 10, 0, 0),
-                EndAt = new DateTime(2026, 1, 1, 12, 0, 0)
+                new Event(
+                    Guid.Parse("7f3a9c2e-4b1d-4e8f-9a6c-2d5e8b1f3a7c"),
+                    "Новое событие 1",
+                    "Описание события 1",
+                    new DateTime(2026, 1, 1, 10, 0, 0),
+                    new DateTime(2026, 1, 1, 11, 0, 0)),
+                new Event(
+                    Guid.Parse("c4e2a8b6-1f3d-4a9e-8b7c-5d2e6f1a3c9b"),
+                    "Новое событие 2",
+                    "Описание события 2",
+                    new DateTime(2026, 1, 1, 11, 0, 0),
+                    new DateTime(2026, 1, 1, 12, 0, 0)),
+                new Event(
+                    Guid.Parse("2a8f5c1e-9d4b-4f7a-b3e6-8c1d5a2f7e4b"),
+                    "Новое событие 3",
+                    "Описание события 3",
+                    new DateTime(2026, 1, 1, 12, 0, 0),
+                    new DateTime(2026, 1, 1, 13, 0, 0))
             };
 
+            var result = _eventService.GetAllEvents();
+
+            Assert.Equal(result.Items.Select(e => e.Id).OrderBy(id => id),
+                expectedEvents.Select(e => e.Id).OrderBy(id => id));
+            Assert.Equal(expectedTotalCount, result.TotalCount);
+            Assert.Equal(expectedItemsCountOnPage, result.Items.Count());
+        }
+
+        [Fact]
+        public void GetEventById_ExistingId_ShouldReturnEvent()
+        {
+            var expectedEvent = new Event(
+                    Guid.Parse("7f3a9c2e-4b1d-4e8f-9a6c-2d5e8b1f3a7c"),
+                    "Новое событие 1",
+                    "Описание события 1",
+                    new DateTime(2026, 1, 1, 10, 0, 0),
+                    new DateTime(2026, 1, 1, 11, 0, 0));
+
+            var result = _eventService.GetEventById(expectedEvent.Id);
+
+            Assert.NotNull(result);
+            Assert.Equivalent(result, expectedEvent);
+        }
+
+        [Fact]
+        public void GetEventById_NewId_ShouldReturnNull()
+        {
             var newEventId = Guid.NewGuid();
 
-            _mockRepo.Setup(method => method.CreateEvent(It.IsAny<EventDTO>())).Returns((Guid?)null);
+            var result = _eventService.GetEventById(newEventId);
 
-            var result = _eventService.CreateEvent(newEvent);
-
-            _mockRepo.Verify(repository => repository.CreateEvent(It.IsAny<EventDTO>()), Times.Once);
             Assert.Null(result);
         }
+
+        [Fact]
+        public void UpdateEvent_ExistingId_ShouldReturnTrueAndUpdateFields()
+        {
+            var expectedEventToUpdate = new Event(
+                    Guid.Parse("7f3a9c2e-4b1d-4e8f-9a6c-2d5e8b1f3a7c"),
+                    "Новое событие 1",
+                    "Описание события 1",
+                    new DateTime(2026, 1, 1, 10, 0, 0),
+                    new DateTime(2026, 1, 1, 11, 0, 0));
+            var expectedEventUpdateInfo = new EventDTO()
+            {
+                Title = "Новое событие",
+                Description = "Описание события",
+                StartAt = new DateTime(2026, 1, 1, 10, 0, 0),
+                EndAt = new DateTime(2026, 1, 1, 13, 0, 0)
+            };
+
+            var result = _eventService.UpdateEvent(expectedEventToUpdate.Id, expectedEventUpdateInfo);
+
+            Assert.True(result);
+            var updated = _eventService.GetEventById(expectedEventToUpdate.Id);
+            Assert.NotNull(updated);
+            Assert.Equal(expectedEventUpdateInfo.Title, updated!.Title);
+        }
+
+        [Fact]
+        public void UpdateEvent_UnknownId_ShouldReturnFalse()
+        {
+            var newEventId = Guid.NewGuid();
+            var expectedEventUpdate = new EventDTO()
+            {
+                Title = "Новое событие",
+                Description = "Описание события",
+                StartAt = new DateTime(2026, 1, 1, 10, 0, 0),
+                EndAt = new DateTime(2026, 1, 1, 13, 0, 0)
+            };
+
+            var result = _eventService.UpdateEvent(newEventId, expectedEventUpdate);
+
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void DeleteEvent_ExistingId_ShouldReturnTrueAndRemove()
+        {
+            var expectedEventDeleteId = Guid.Parse("c4e2a8b6-1f3d-4a9e-8b7c-5d2e6f1a3c9b");
+
+            var result = _eventService.DeleteEvent(expectedEventDeleteId);
+
+            Assert.True(result);
+            Assert.Null(_eventService.GetEventById(expectedEventDeleteId));
+        }
+
+        [Fact]
+        public void DeleteEvent_UnknownIdShouldReturnFalse()
+        {
+            var newEventId = Guid.NewGuid();
+
+            var result = _eventService.DeleteEvent(newEventId);
+
+            Assert.False(result);
+        }
+
     }
 }

@@ -11,9 +11,9 @@ namespace EventRepo.Controllers
     [ApiController]
     public class EventsController : ControllerBase
     {
-        private readonly IEventRepository _eventService;
+        private readonly IEventService _eventService;
 
-        public EventsController(IEventRepository eventService) 
+        public EventsController(IEventService eventService) 
         {
             _eventService = eventService;
         }
@@ -85,9 +85,9 @@ namespace EventRepo.Controllers
         [HttpPost]
         public ActionResult<ApiResult> CreateEvent([FromBody] EventDTO eventDTO)
         {
-            var newEventGuid = _eventService.CreateEvent(eventDTO);
+            var newEvent = _eventService.CreateEvent(eventDTO);
 
-            if (newEventGuid is null)
+            if (newEvent is null)
                 return Conflict(new ApiResult
                 {
                     Success = false,
@@ -95,7 +95,7 @@ namespace EventRepo.Controllers
                     Message = $"Событие с указанным ID уже существует"
                 });
 
-            return CreatedAtAction(nameof(GetEventById), new { id = newEventGuid }, new ApiResult
+            return CreatedAtAction(nameof(GetEventById), new { id = newEvent.Id }, new ApiResult
             {
                 Success = true,
                 StatusCode = HttpStatusCode.Created,
