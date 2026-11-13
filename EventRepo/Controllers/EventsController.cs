@@ -11,9 +11,9 @@ namespace EventRepo.Controllers
     [ApiController]
     public class EventsController : ControllerBase
     {
-        private readonly IEventService _eventService;
+        private readonly IEventRepository _eventService;
 
-        public EventsController(IEventService eventService) 
+        public EventsController(IEventRepository eventService) 
         {
             _eventService = eventService;
         }

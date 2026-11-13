@@ -3,7 +3,7 @@ using EventRepo.Models.DTO;
 
 namespace EventRepo.Interfaces
 {
-    public interface IEventService
+    public interface IEventRepository
     {
         PaginatedResult<Event> GetAllEvents(
             string? title = null,

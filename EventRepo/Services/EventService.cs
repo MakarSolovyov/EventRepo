@@ -5,86 +5,38 @@ using System.Collections.Concurrent;
 
 namespace EventRepo.Services
 {
-    public class EventService : IEventService
+    public class EventService
     {
-        private readonly ConcurrentDictionary<Guid, Event> _events = new();
+        private readonly IEventRepository _eventRepository;
 
-        public PaginatedResult<Event> GetAllEvents(
-            string? title = null,
-            DateTime? from = null,
-            DateTime? to = null,
-            int page = 1,
-            int pageSize = 10) 
+        public EventService(IEventRepository eventRepository)
         {
-            IEnumerable<Event> filteredEvents = _events.Values;
-
-            if (!string.IsNullOrWhiteSpace(title))
-                filteredEvents = filteredEvents.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
-
-            if (from.HasValue)
-                filteredEvents = filteredEvents.Where(e => e.StartAt >= from.Value);
-
-            if (to.HasValue)
-                filteredEvents = filteredEvents.Where(e => e.EndAt <= to.Value);
-
-            var totalCount = filteredEvents.Count();
-
-            filteredEvents = filteredEvents.Skip((page - 1) * pageSize).Take(pageSize).ToList();
-
-            var result = new PaginatedResult<Event>()
-            {
-                TotalCount = totalCount,
-                Items = filteredEvents,
-                Page = page,
-                PageSize = filteredEvents.Count()
-            };
-
-            return result;
+            _eventRepository = eventRepository;
         }
 
-        public Event? GetEventById(Guid id) 
+        public PaginatedResult<Event> GetAllEvents(string? title = null, DateTime? from = null, DateTime? to = null, int page = 1, int pageSize = 10)
         {
-            return _events.TryGetValue(id, out var ev)
-                ? ev
-                : null;
+            return _eventRepository.GetAllEvents(title, from, to, page, pageSize);
         }
 
-        public Guid? CreateEvent(EventDTO eventDTO) 
+        public Event? GetEventById(Guid id)
         {
-            var newEvent = ToEvent(eventDTO);
-
-            if (_events.TryAdd(newEvent.Id, newEvent))
-                return newEvent.Id;
-
-            return null;
+            return _eventRepository.GetEventById(id);
         }
 
-        public bool UpdateEvent(Guid id, EventDTO eventDTO) 
+        public Guid? CreateEvent(EventDTO eventDTO)
         {
-            var newEvent = ToEvent(eventDTO, id);
-
-            while (_events.TryGetValue(newEvent.Id, out var current))
-            {
-                if (_events.TryUpdate(newEvent.Id, newEvent, current))
-                    return true;
-            }
-
-            return false;
+            return _eventRepository.CreateEvent(eventDTO);
         }
 
-        public bool DeleteEvent(Guid id) 
+        public bool UpdateEvent(Guid id, EventDTO eventDTO)
         {
-            return _events.TryRemove(id, out _);
+            return _eventRepository.UpdateEvent(id, eventDTO);
         }
 
-        private Event ToEvent(EventDTO eventDTO, Guid? id = null) 
+        public bool DeleteEvent(Guid id)
         {
-            return  new Event(
-                id ?? Guid.NewGuid(),
-                eventDTO.Title,
-                eventDTO.Description,
-                eventDTO.StartAt.Value,
-                eventDTO.EndAt.Value);
+            return _eventRepository.DeleteEvent(id);
         }
     }
 }
