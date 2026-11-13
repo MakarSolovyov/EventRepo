@@ -5,10 +5,12 @@ namespace EventRepo.Interfaces
 {
     public interface IEventService
     {
-        IReadOnlyList<Event> GetAllEvents(
+        PaginatedResult<Event> GetAllEvents(
             string? title = null,
             DateTime? from = null,
-            DateTime? to = null);
+            DateTime? to = null,
+            int page = 1,
+            int pageSize = 10);
         Event? GetEventById(Guid id);
         Guid? CreateEvent(EventDTO eventDTO);
         bool UpdateEvent(Guid id, EventDTO eventDTO);

@@ -9,10 +9,12 @@ namespace EventRepo.Services
     {
         private readonly ConcurrentDictionary<Guid, Event> _events = new();
 
-        public IReadOnlyList<Event> GetAllEvents(
+        public PaginatedResult<Event> GetAllEvents(
             string? title = null,
             DateTime? from = null,
-            DateTime? to = null) 
+            DateTime? to = null,
+            int page = 1,
+            int pageSize = 10) 
         {
             IEnumerable<Event> filteredEvents = _events.Values;
 
@@ -25,7 +27,19 @@ namespace EventRepo.Services
             if (to.HasValue)
                 filteredEvents = filteredEvents.Where(e => e.EndAt <= to.Value);
 
-            return filteredEvents.ToList();
+            var totalCount = filteredEvents.Count();
+
+            filteredEvents = filteredEvents.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            var result = new PaginatedResult<Event>()
+            {
+                TotalCount = totalCount,
+                Items = filteredEvents,
+                Page = page,
+                PageSize = filteredEvents.Count()
+            };
+
+            return result;
         }
 
         public Event? GetEventById(Guid id) 

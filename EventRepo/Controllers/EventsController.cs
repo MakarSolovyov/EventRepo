@@ -3,6 +3,7 @@ using EventRepo.Models;
 using EventRepo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using static System.Net.WebRequestMethods;
 
 namespace EventRepo.Controllers
 {
@@ -20,24 +21,22 @@ namespace EventRepo.Controllers
         /// <summary>
         /// Метод возвращает данные всех по всем событиям
         /// </summary>
-        /// <response code="200">Возвращается JSON-структура ApiResult&lt;IReadOnlyList&lt;Event&gt;&gt;
+        /// <response code="200">Возвращается JSON-структура ApiResult&lt;PaginatedResult&lt;Event&gt;&gt;
         /// с деталями всех имеющихся в коллекции событий</response>
-        [ProducesResponseType(typeof(ApiResult<IReadOnlyList<Event>>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResult<PaginatedResult<Event>>), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<IReadOnlyList<Event>>> GetAllEvents(
-            [FromQuery] string? title,
-            [FromQuery] DateTime? from,
-            [FromQuery] DateTime? to) 
+        public ActionResult<ApiResult<PaginatedResult<Event>>> GetAllEvents([FromQuery] EventFilterDTO filter) 
         {
-            var events = _eventService.GetAllEvents(title, from, to);
+            var events = _eventService.GetAllEvents(filter.Title, filter.From, filter.To, filter.Page, filter.PageSize);
 
-            return Ok(new ApiResult<IReadOnlyList<Event>>
+            return Ok(new ApiResult<PaginatedResult<Event>>
             {
                 Data = events,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = $"Получены все имеющиеся события, кол-во событий: {events.Count}"
+                Message = $"Получена страница {events.Page} из {events.TotalCount} событий " +
+                  $"(элементов на странице: {events.PageSize})"
             });
         }
 
