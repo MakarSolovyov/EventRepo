@@ -9,9 +9,23 @@ namespace EventRepo.Services
     {
         private readonly ConcurrentDictionary<Guid, Event> _events = new();
 
-        public IReadOnlyList<Event> GetAllEvents() 
+        public IReadOnlyList<Event> GetAllEvents(
+            string? title = null,
+            DateTime? from = null,
+            DateTime? to = null) 
         {
-            return _events.Values.ToList();
+            IEnumerable<Event> filteredEvents = _events.Values;
+
+            if (!string.IsNullOrWhiteSpace(title))
+                filteredEvents = filteredEvents.Where(e => e.Title.Contains(title, StringComparison.OrdinalIgnoreCase));
+
+            if (from.HasValue)
+                filteredEvents = filteredEvents.Where(e => e.StartAt >= from.Value);
+
+            if (to.HasValue)
+                filteredEvents = filteredEvents.Where(e => e.EndAt <= to.Value);
+
+            return filteredEvents.ToList();
         }
 
         public Event? GetEventById(Guid id) 

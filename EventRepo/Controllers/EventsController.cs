@@ -25,9 +25,12 @@ namespace EventRepo.Controllers
         [ProducesResponseType(typeof(ApiResult<IReadOnlyList<Event>>), StatusCodes.Status200OK)]
         [Produces("application/json")]
         [HttpGet]
-        public ActionResult<ApiResult<IReadOnlyList<Event>>> GetAllEvents() 
+        public ActionResult<ApiResult<IReadOnlyList<Event>>> GetAllEvents(
+            [FromQuery] string? title,
+            [FromQuery] DateTime? from,
+            [FromQuery] DateTime? to) 
         {
-            var events = _eventService.GetAllEvents();
+            var events = _eventService.GetAllEvents(title, from, to);
 
             return Ok(new ApiResult<IReadOnlyList<Event>>
             {
