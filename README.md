@@ -83,7 +83,7 @@ dotnet run --launch-profile https
 #### Удаление данных события по идентификатору
 
 ```https
-  GET /events/{id}
+  DELETE /events/{id}
 ```
 
 | Parameter | Type     | Description                       |

@@ -20,7 +20,7 @@ namespace EventRepo.Models
         /// <summary>
         /// Описание события
         /// </summary>
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         /// <summary>
         /// Время начала события
