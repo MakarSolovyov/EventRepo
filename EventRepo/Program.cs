@@ -1,5 +1,6 @@
 
 using EventRepo.Interfaces;
+using EventRepo.Middleware;
 using EventRepo.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Reflection;
@@ -14,8 +15,6 @@ namespace EventRepo
             
             builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
             {
-                //options.SuppressModelStateInvalidFilter = true;
-
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState
@@ -48,6 +47,8 @@ namespace EventRepo
             });
 
             var app = builder.Build();
+
+            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
             if (app.Environment.IsDevelopment())
             {

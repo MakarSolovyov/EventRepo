@@ -36,7 +36,15 @@ dotnet run --launch-profile https
   GET /events
 ```
 
-- 200 OK — ApiResult<IReadOnlyList<Event>> со списком событий.
+| Parameter | Type     | Description                       |
+| :-------- | :------- | :-------------------------------- |
+| `title`      | `string`   | Название (частичное, регистронезависимое) |
+| `from`      | `DateTime`   | Время начала события |
+| `to`      | `DateTime`   | Время завершения события |
+| `page`      | `int`   | Номер текущей страницы (начиная с 1) |
+| `pageSize`      | `int`   | Количество элементов на текущей странице |
+
+- 200 OK — ApiResult<PaginatedResult<Event>> со списком событий.
 
 #### Получение данных события по идентификатору
 
@@ -98,3 +106,22 @@ dotnet run --launch-profile https
 - Swagger UI доступен только в режиме Development.
 - XML-документация включена в Swagger.
 - Для HTTPS включён редирект (UseHttpsRedirection).
+## Запуск тестов
+
+Из корневой папки репозитория выполните:
+
+```bash
+dotnet test
+```
+
+Команда соберёт проекты решения и запустит тесты EventService.
+## Формат обработки исключений
+
+Для глобальной обработки исключений используется формат RFC 7807 (Problem Details).
+
+```bash
+{
+  "status": 500,
+  "detail": "Описание ошибки"
+}
+```
