@@ -187,5 +187,71 @@ namespace EventRepoTests
             Assert.False(result);
         }
 
+        [Fact]
+        public void GetAllEvents_FilterByTitle_ShouldReturnMatches()
+        {
+            var expectedEventCount = 1;
+            var expectedTitlePart = "событие 1";
+
+            var result = _eventService.GetAllEvents(title: expectedTitlePart);
+
+            Assert.Equal(expectedEventCount, result.TotalCount);
+            Assert.Contains(result.Items, e => e.Title.Contains(expectedTitlePart));
+        }
+
+        [Fact]
+        public void GetAllEvents_FilterDate_ShouldReturnMatches()
+        {
+            var expectedEventCount = 3;
+            var expectedFromDate = new DateTime(2026, 1, 1, 10, 0, 0);
+            
+            var result = _eventService.GetAllEvents(from: expectedFromDate);
+
+            Assert.Equal(expectedEventCount, result.TotalCount);
+            Assert.Contains(result.Items, e => e.StartAt >= expectedFromDate);
+        }
+
+        [Fact]
+        public void GetAllEvents_Pagination_ShouldReturnCorrectPage()
+        {
+            for (int i = 4; i < 15; i++)
+            {
+                _eventService.CreateEvent(new EventDTO()
+                {
+                    Title = $"Новое событие {i}",
+                    Description = $"Описание события {i}",
+                    StartAt = new DateTime(2026, 1, 1, 10, 0, 0),
+                    EndAt = new DateTime(2026, 1, 1, 13, 0, 0)
+                });
+            }
+            var expectedTotalCount = 14;
+            var expectedPage1EventCount = 5;
+            var expectedPage3EventCount = 4;
+
+            var page1 = _eventService.GetAllEvents(page: 1, pageSize: 5);
+            var page3 = _eventService.GetAllEvents(page: 3, pageSize: 5);
+
+            Assert.Equal(expectedTotalCount, page1.TotalCount);
+            Assert.Equal(expectedPage1EventCount, page1.Items.Count());
+            Assert.Equal(expectedPage3EventCount, page3.Items.Count());
+        }
+
+        [Fact]
+        public void GetAllEvents_CombineFilter_ShouldReturnMatches()
+        {
+            var expectedEventCount = 1;
+            var expectedTitlePart = "событие 1";
+            var expectedFromDate = new DateTime(2026, 1, 1, 10, 0, 0);
+            var expectedToDate = new DateTime(2026, 1, 1, 12, 0, 0);
+
+            var result = _eventService.GetAllEvents(title: expectedTitlePart, from: expectedFromDate, to: expectedToDate); 
+
+            Assert.Equal(expectedEventCount, result.TotalCount);
+            Assert.Contains(result.Items, e => e.Title.Contains(expectedTitlePart));
+            Assert.Contains(result.Items, e => e.StartAt >= expectedFromDate);
+            Assert.Contains(result.Items, e => e.EndAt <= expectedToDate);
+        }
+
+
     }
 }
