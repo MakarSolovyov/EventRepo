@@ -1,7 +1,8 @@
-
 using EventRepo.Interfaces;
+using EventRepo.Middleware;
 using EventRepo.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Reflection;
 
 namespace EventRepo
@@ -14,8 +15,6 @@ namespace EventRepo
             
             builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
             {
-                //options.SuppressModelStateInvalidFilter = true;
-
                 options.InvalidModelStateResponseFactory = context =>
                 {
                     var errors = context.ModelState
@@ -38,7 +37,7 @@ namespace EventRepo
                 };
             });
 
-            builder.Services.AddSingleton<IEventService, EventService>();
+            builder.Services.AddSingleton<IEventService>(_ => new EventService());
 
             builder.Services.AddSwaggerGen(options =>
             {
@@ -48,6 +47,30 @@ namespace EventRepo
             });
 
             var app = builder.Build();
+
+            app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+            app.UseStatusCodePages(async context =>
+            {
+                var response = context.HttpContext.Response;
+                var statusCode = response.StatusCode;
+
+                var message = statusCode switch
+                {
+                    StatusCodes.Status404NotFound => "Маршрут или объект не найден",
+                    StatusCodes.Status405MethodNotAllowed => "Метод HTTP не поддерживается для этого маршрута",
+                    StatusCodes.Status409Conflict => "Конфликт с текущим состоянием целевого ресурса на сервере",
+                    _ => "Запрос не может быть обработан"
+                };
+
+                response.ContentType = "application/json";
+
+                await response.WriteAsJsonAsync(new ApiResult
+                {
+                    Success = false,
+                    StatusCode = (HttpStatusCode)statusCode,
+                    Message = message
+                });
+            });
 
             if (app.Environment.IsDevelopment())
             {

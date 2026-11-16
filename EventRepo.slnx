@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="EventRepo/EventRepo.csproj" />
+  <Project Path="EventRepoTests/EventRepoTests.csproj" Id="5baa0565-c62f-4930-8d81-2490cd700b54" />
 </Solution>
