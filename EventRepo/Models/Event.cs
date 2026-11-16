@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-
-namespace EventRepo.Models
+﻿namespace EventRepo.Models
 {
     /// <summary>
     /// Класс, содержащий информацию по событию

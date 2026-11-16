@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net;
 
 namespace EventRepo.Middleware
 {
@@ -46,10 +46,18 @@ namespace EventRepo.Middleware
             httpContext.Response.StatusCode = statusCode;
             httpContext.Response.ContentType = "application/json";
 
-            var error = new ProblemDetails
+            var message = statusCode switch
             {
-                Status = statusCode,
-                Detail = ex.Message
+                StatusCodes.Status400BadRequest => "Некорректный запрос",
+                StatusCodes.Status404NotFound => "Объект не найден",
+                _ => "Внутренняя ошибка сервера"
+            };
+
+            var error = new ApiResult
+            {
+                Success = false,
+                StatusCode = (HttpStatusCode)statusCode,
+                Message = ex.Message
             };
 
             await httpContext.Response.WriteAsJsonAsync(error);
@@ -58,7 +66,8 @@ namespace EventRepo.Middleware
         private static int MapStatusCode(Exception ex) => ex switch
         {
             ValidationException => StatusCodes.Status400BadRequest,
-            KeyNotFoundException knfe => StatusCodes.Status404NotFound,
+            ArgumentOutOfRangeException => StatusCodes.Status400BadRequest,
+            KeyNotFoundException => StatusCodes.Status404NotFound,
             _ => StatusCodes.Status500InternalServerError
         };
     }

@@ -12,6 +12,11 @@
         public int TotalCount { get; set; }
 
         /// <summary>
+        /// Количество событий на текущей странице
+        /// </summary>
+        public int ItemCount { get; set; }
+
+        /// <summary>
         /// События текущей страницы
         /// </summary>
         public IEnumerable<T> Items { get; set; } = Array.Empty<T>();
@@ -22,7 +27,7 @@
         public int Page { get; set; }
 
         /// <summary>
-        /// Количество элементов на текущей странице
+        /// Количество элементов на странице
         /// </summary>
         public int PageSize { get; set; }
     }

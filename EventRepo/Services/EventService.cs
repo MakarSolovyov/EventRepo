@@ -9,9 +9,11 @@ namespace EventRepo.Services
     {
         private readonly ConcurrentDictionary<Guid, Event> _events = new();
 
-        public EventService(IEnumerable<Event> events) 
+        public EventService() { }
+
+        public EventService(IEnumerable<Event> events)
         {
-            foreach (var ev in events) 
+            foreach (var ev in events)
             {
                 _events[ev.Id] = ev;
             }
@@ -24,6 +26,15 @@ namespace EventRepo.Services
             int page = 1,
             int pageSize = 10)
         {
+            if (page < 1) 
+            {
+                throw new ArgumentOutOfRangeException(nameof(page), page, "Номер страницы должен быть больше или равен 1 (до 2 147 483 647)");
+            }
+            if (pageSize < 1 || pageSize > 100)
+            {
+                throw new ArgumentOutOfRangeException(nameof(pageSize), pageSize, "Размер страницы должен быть в диапазоне 1..100");
+            }
+
             IEnumerable<Event> filteredEvents = _events.Values;
 
             if (!string.IsNullOrWhiteSpace(title))
@@ -37,14 +48,22 @@ namespace EventRepo.Services
 
             var totalCount = filteredEvents.Count();
 
-            filteredEvents = filteredEvents.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+            var offset = ((long)page - 1) * pageSize;
+            
+            filteredEvents = filteredEvents
+                .OrderBy(e => e.StartAt)
+                .ThenBy(e => e.Id)
+                .Skip(offset > int.MaxValue ? int.MaxValue : (int)offset)
+                .Take(pageSize)
+                .ToList();
 
             var result = new PaginatedResult<Event>()
             {
                 TotalCount = totalCount,
                 Items = filteredEvents,
                 Page = page,
-                PageSize = filteredEvents.Count()
+                ItemCount = filteredEvents.Count(),
+                PageSize = pageSize
             };
 
             return result;

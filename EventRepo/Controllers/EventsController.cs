@@ -3,7 +3,6 @@ using EventRepo.Models;
 using EventRepo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using static System.Net.WebRequestMethods;
 
 namespace EventRepo.Controllers
 {
@@ -36,7 +35,7 @@ namespace EventRepo.Controllers
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = $"Получена страница {events.Page} из {events.TotalCount} событий " +
-                  $"(элементов на странице: {events.PageSize})"
+                  $"(элементов на странице: {events.ItemCount})"
             });
         }
 

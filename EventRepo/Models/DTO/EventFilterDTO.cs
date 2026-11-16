@@ -1,37 +1,43 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace EventRepo.Models.DTO
 {
     /// <summary>
     /// Модель фильтрации данных событий
     /// </summary>
-    public class EventFilterDTO
+    public class EventFilterDTO : IValidatableObject
     {
         /// <summary>
         /// Название (частичное, регистронезависимое)
         /// </summary>
+        [FromQuery(Name = "title")]
         [StringLength(200, ErrorMessage = "Название не должно превышать 200 символов")]
         public string? Title { get; set; }
 
         /// <summary>
         /// Время начала события
         /// </summary>
+        [FromQuery(Name = "from")]
         public DateTime? From { get; set; }
 
         /// <summary>
         /// Время завершения события
         /// </summary>
+        [FromQuery(Name = "to")]
         public DateTime? To { get; set; }
 
         /// <summary>
         /// Номер страницы (начиная с 1)
         /// </summary>
-        [Range(1, int.MaxValue, ErrorMessage = "Номер страницы должен быть больше или равен 1")]
+        [FromQuery(Name = "page")]
+        [Range(1, int.MaxValue, ErrorMessage = "Номер страницы должен быть больше или равен 1 (до 2 147 483 647)")]
         public int Page { get; set; } = 1;
 
         /// <summary>
         /// Количество элементов на странице
         /// </summary>
+        [FromQuery(Name = "pageSize")]
         [Range(1, 100, ErrorMessage = "Размер страницы должен быть в диапазоне 1..100")]
         public int PageSize { get; set; } = 10;
 
